@@ -2,6 +2,9 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import os
 
+print("ENV VARIABLES:", os.environ)  # Cek semua env variable
+print("DATABASE_URL:", os.getenv("DATABASE_URL"))  # Pastikan URL database terdeteksi
+
 app = Flask(__name__)
 
 # Gunakan URL PostgreSQL dari Railway
