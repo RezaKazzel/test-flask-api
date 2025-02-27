@@ -1,29 +1,27 @@
 import requests
 from flask import Flask, request, jsonify
 
-app = Flask(__name__)
-
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1344385105774252052/Ty6imbzcU49d-vghGi6miUhbG1Vzlvho9WzRwRfAigQVDPS9pzFlHnfJF2D2Zz2grphF"
 
 @app.route('/send_to_discord', methods=['POST'])
 def send_to_discord():
     data = request.get_json()
+
     if not data:
         return jsonify({"error": "Invalid JSON"}), 400
 
-    # Ambil data dari request
-    sender = data.get("query", {}).get("sender", "Unknown")
-    message = data.get("query", {}).get("message", "No message")
-    is_group = data.get("query", {}).get("isGroup", False)
+    # Ambil content & embed dari request JSON
+    message_content = data.get("content", "No content provided")
+    embed_data = data.get("embed", {})
 
-    # Format pesan untuk Discord
-    discord_message = f"📩 **Pesan Baru**\n👤 Pengirim: {sender}\n💬 Pesan: {message}\n🏷️ Grup: {'Ya' if is_group else 'Tidak'}"
+    # Format payload untuk Webhook Discord
+    payload = {
+        "content": message_content,
+        "embeds": [embed_data] if embed_data else []
+    }
 
-    # Kirim ke Webhook Discord
-    payload = {"content": discord_message}
     response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
 
-    # Periksa apakah pengiriman berhasil
     if response.status_code == 204:
         return jsonify({"status": "success", "message": "Sent to Discord"}), 200
     else:
