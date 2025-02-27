@@ -1,6 +1,7 @@
 flask
 requests
 gunicorn
+lxml
 flask-sqlalchemy
 psycopg2
 curl-cffi
