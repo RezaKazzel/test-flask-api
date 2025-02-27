@@ -61,7 +61,7 @@ def RecaptchaV3():
     client = requests.Session()
     client.headers.update({'content-type': 'application/x-www-form-urlencoded'})
     
-    matches = re.findall('([api2|enterprise]+)\/anchor\?(.*)', ANCHOR_URL)[0]
+    matches = re.findall(r'([api2|enterprise]+)/anchor\?(.*)', ANCHOR_URL)[0]
     url_base += matches[0]+'/'
     params = matches[1]
     res = client.get(url_base+'anchor', params=params)
