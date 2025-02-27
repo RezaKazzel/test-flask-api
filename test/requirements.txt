@@ -3,3 +3,5 @@ requests
 gunicorn
 flask-sqlalchemy
 psycopg2
+curl-cffi
+beautifulsoup4
