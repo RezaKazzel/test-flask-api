@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1344385105774252052/Ty6imbzcU49d-vghGi6miUhbG1Vzlvho9WzRwRfAigQVDPS9pzFlHnfJF2D2Zz2grphF"
 
+app = Flask(__name__)
+
 @app.route('/send_to_discord', methods=['POST'])
 def send_to_discord():
     data = request.get_json()
