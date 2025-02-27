@@ -1,17 +1,18 @@
-from flask import Flask, request, jsonify
 import psycopg2
 import os
+import re
+from flask import Flask, request, jsonify
+from curl_cffi import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
-# Ambil DATABASE_URL dari environment variable
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/dbname")
 
-# Koneksi ke PostgreSQL
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
-# **POST /data** → Menyimpan atau memperbarui data
 @app.route("/data", methods=["POST"])
 def add_or_update_data():
     data = request.json
@@ -24,7 +25,6 @@ def add_or_update_data():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Periksa apakah data sudah ada
     cur.execute("SELECT value FROM data WHERE name = %s", (name,))
     existing = cur.fetchone()
 
@@ -39,7 +39,6 @@ def add_or_update_data():
 
     return jsonify({"message": "Data saved", "name": name, "value": value})
 
-# **GET /data/<name>** → Mengambil data berdasarkan name
 @app.route("/data/<name>", methods=["GET"])
 def get_data(name):
     conn = get_db_connection()
@@ -54,6 +53,63 @@ def get_data(name):
     if data:
         return jsonify({"name": name, "value": data[0]})
     return jsonify({"error": "Data not found"}), 404
+
+def RecaptchaV3():
+    ANCHOR_URL = 'https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Lcr1ncUAAAAAH3cghg6cOTPGARa8adOf-y9zv2x&co=aHR0cHM6Ly9vdW8ucHJlc3M6NDQz&hl=en&v=pCoGBhjs9s8EhFOHJFe8cqis&size=invisible&cb=ahgyd1gkfkhe'
+    url_base = 'https://www.google.com/recaptcha/'
+    post_data = "v={}&reason=q&c={}&k={}&co={}"
+    client = requests.Session()
+    client.headers.update({'content-type': 'application/x-www-form-urlencoded'})
+    
+    matches = re.findall('([api2|enterprise]+)\/anchor\?(.*)', ANCHOR_URL)[0]
+    url_base += matches[0]+'/'
+    params = matches[1]
+    res = client.get(url_base+'anchor', params=params)
+    token = re.findall(r'"recaptcha-token" value="(.*?)"', res.text)[0]
+    params = dict(pair.split('=') for pair in params.split('&'))
+    post_data = post_data.format(params["v"], token, params["k"], params["co"])
+    res = client.post(url_base+'reload', params=f'k={params["k"]}', data=post_data)
+    
+    return re.findall(r'"rresp","(.*?)"', res.text)[0]
+
+def ouo_bypass(url):
+    tempurl = url.replace("ouo.press", "ouo.io")
+    p = urlparse(tempurl)
+    id = tempurl.split('/')[-1]
+    client = requests.Session()
+    client.headers.update({'referer': 'http://www.google.com/ig/adde?moduleurl='})
+    
+    res = client.get(tempurl, impersonate="chrome110")
+    next_url = f"{p.scheme}://{p.hostname}/go/{id}"
+
+    for _ in range(2):
+        if res.headers.get('Location'): 
+            break
+
+        bs4 = BeautifulSoup(res.content, 'lxml')
+        inputs = bs4.form.find_all("input", {"name": re.compile(r"token$")})
+        data = {input.get('name'): input.get('value') for input in inputs}
+        data['x-token'] = RecaptchaV3()
+
+        res = client.post(next_url, data=data, headers={'content-type': 'application/x-www-form-urlencoded'}, 
+                          allow_redirects=False, impersonate="chrome110")
+        next_url = f"{p.scheme}://{p.hostname}/xreallcygo/{id}"
+
+    return {'original_link': url, 'bypassed_link': res.headers.get('Location')}
+
+@app.route('/bypass', methods=['POST'])
+def bypass_api():
+    try:
+        data = request.get_json()
+        if not data or 'url' not in data:
+            return jsonify({'error': 'Missing URL'}), 400
+
+        result = ouo_bypass(data['url'])
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
