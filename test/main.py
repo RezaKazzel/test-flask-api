@@ -2,11 +2,13 @@ import psycopg2
 import os
 import re
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from curl_cffi import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 app = Flask(__name__)
+CORS(app)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/dbname")
 
