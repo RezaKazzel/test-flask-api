@@ -1,6 +1,7 @@
 import psycopg2
 import os
 import re
+import json
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from curl_cffi import requests
@@ -21,8 +22,10 @@ def add_or_update_data():
     name = data.get("name")
     value = data.get("value")
 
-    if not name or not value:
+    if not name or value is None:
         return jsonify({"error": "Field 'name' and 'value' are required"}), 400
+
+    value_json = json.dumps(value)
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -31,9 +34,9 @@ def add_or_update_data():
     existing = cur.fetchone()
 
     if existing:
-        cur.execute("UPDATE data SET value = %s WHERE name = %s", (value, name))
+        cur.execute("UPDATE data SET value = %s WHERE name = %s", (value_json, name))
     else:
-        cur.execute("INSERT INTO data (name, value) VALUES (%s, %s)", (name, value))
+        cur.execute("INSERT INTO data (name, value) VALUES (%s, %s)", (name, value_json))
 
     conn.commit()
     cur.close()
@@ -53,7 +56,7 @@ def get_data(name):
     conn.close()
 
     if data:
-        return jsonify({"name": name, "value": data[0]})
+        return jsonify({"name": name, "value": json.loads(data[0])})
     return jsonify({"error": "Data not found"}), 404
 
 def RecaptchaV3():
