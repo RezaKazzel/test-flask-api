@@ -25,7 +25,10 @@ def add_or_update_data():
     if not name or value is None:
         return jsonify({"error": "Field 'name' and 'value' are required"}), 400
 
-    value_json = json.dumps(value)
+    if isinstance(value, (dict, list)):  
+        value_json = json.dumps(value)
+    else:
+        value_json = value
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -49,7 +52,7 @@ def add_or_update_data():
 def get_data(name):
     conn = get_db_connection()
     cur = conn.cursor()
-
+    
     cur.execute("SELECT value FROM data WHERE name = %s", (name,))
     data = cur.fetchone()
 
@@ -59,11 +62,14 @@ def get_data(name):
     if not data:
         return jsonify({"error": "Data not found"}), 404
 
-    try:
-        return jsonify({"name": name, "value": json.loads(data[0])})
-    except json.JSONDecodeError:
-        return jsonify({"error": "Invalid JSON format in database"}), 500
+    value = data[0]
 
+    try:
+        value = json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    return jsonify({"name": name, "value": value})
 
 def RecaptchaV3():
     import requests
