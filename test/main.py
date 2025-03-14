@@ -157,6 +157,11 @@ def scrape_androidadult(url):
     mirror_apk = soup.find("input", {"name": "getpostidmirrorapk"})
 
     # Mengambil nilai dari atribut 'value'
+    if not apk_file:
+        apk_file = soup.find("input", {"name": "getpostidmod_apk"})
+    if not mirror_apk:
+        mirror_apk = soup.find("input", {"name": "getpostidmirrormodapk"})
+    
     apk_url = apk_file["value"] if apk_file else None
     mirror_url = mirror_apk["value"] if mirror_apk else None
 
