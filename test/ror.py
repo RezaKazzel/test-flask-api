@@ -142,46 +142,5 @@ def bypass_api():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-def scrape_androidadult(url):
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        return {"error": f"Gagal mengambil halaman (status {response.status_code})"}
-
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    # Mencari elemen <input> dengan name tertentu
-    apk_file = soup.find("input", {"name": "getpostidapkfile"})
-    mirror_apk = soup.find("input", {"name": "getpostidmirrorapk"})
-
-    if apk_file and apk_file["value"] == "":
-        apk_file = soup.find("input", {"name": "getpostidmod_apk"})
-    if mirror_apk and mirror_apk["value"] == "":
-        mirror_apk = soup.find("input", {"name": "getpostidmirrormodapk"})
-    
-    apk_url = apk_file["value"] if apk_file else None
-    mirror_url = mirror_apk["value"] if mirror_apk else None
-
-    return {
-        "APK File": apk_url,
-        "Mirror APK": mirror_url
-    }
-
-@app.route("/androidadult", methods=["POST"])
-def scrape_api():
-    try:
-        data = request.get_json()
-        if not data or "url" not in data:
-            return jsonify({"error": "URL diperlukan"}), 400
-
-        result = scrape_androidadult(data["url"])
-        return jsonify(result)
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
