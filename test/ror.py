@@ -27,8 +27,6 @@ def hitung():
     for i in range(level, tujuan + 1):
         bebek = math.floor(1.5 * (i ** 1.5) + 10)
         ayam = bebek + ayam
-        if i != tujuan:
-            ayam = bebek
 
     return jsonify({"result": ayam})
 
