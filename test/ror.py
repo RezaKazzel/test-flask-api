@@ -16,6 +16,21 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@host:port/d
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
+@app.route('/level', methods=['POST'])
+def hitung():
+    data = request.get_json()
+    level = int(data.get("level", 1))
+    tujuan = int(data.get("tujuan", level))
+
+    ayam = 0
+    for i in range(level, tujuan + 1):
+        bebek = math.floor(1.5 * (i ** 1.5) + 10)
+        ayam = bebek + ayam
+        if i != tujuan:
+            ayam = bebek
+
+    return jsonify({"result": ayam})
+
 @app.route("/data", methods=["POST"])
 def add_or_update_data():
     data = request.json
