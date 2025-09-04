@@ -30,6 +30,42 @@ def result():
 
     return jsonify({"result": ayam})
 
+def streak_to_time(streak):
+    total_seconds = streak * 210  # 1 streak = 3 menit 30 detik = 210 detik
+
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+
+    parts = []
+    if days > 0:
+        parts.append(f"{days} Hari")
+    if hours > 0:
+        parts.append(f"{hours} Jam")
+    if minutes > 0:
+        parts.append(f"{minutes} Menit")
+    if seconds > 0:
+        parts.append(f"{seconds} Detik")
+
+    return " ".join(parts)
+
+@app.route("/streak", methods=["GET"])
+def streak():
+    streak_param = request.args.get("streak")
+    if streak_param is None:
+        return jsonify({"error": "Missing 'streak' parameter"}), 400
+
+    try:
+        streak_count = int(streak_param)
+        if streak_count < 0:
+            raise ValueError
+    except ValueError:
+        return jsonify({"error": "'streak' must be a non-negative integer"}), 400
+
+    result = streak_to_time(streak_count)
+    return jsonify({"streak": streak_count, "time": result})
+
 @app.route("/data", methods=["POST"])
 def add_or_update_data():
     data = request.json
